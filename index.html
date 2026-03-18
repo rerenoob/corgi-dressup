@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corgi Dress-Up! 🐾</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+    background: linear-gradient(135deg, #ffe4f0 0%, #fff3e0 50%, #e8f5e9 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    overflow-x: hidden;
+  }
+  h1 {
+    font-size: 2.5em;
+    color: #e91e63;
+    text-shadow: 3px 3px 0 #ffb3d1;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .corgi-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .corgi-btn {
+    padding: 10px 24px;
+    font-size: 1.2em;
+    border: 4px solid #ff9800;
+    border-radius: 30px;
+    background: #fff3e0;
+    cursor: pointer;
+    font-family: inherit;
+    color: #e65100;
+    font-weight: bold;
+    transition: all 0.2s;
+    box-shadow: 3px 3px 0 #ff9800;
+  }
+  .corgi-btn.active {
+    background: #ff9800;
+    color: white;
+    transform: scale(1.05);
+  }
+  .corgi-btn:hover { transform: scale(1.08); }
+
+  .game-area {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .corgi-stage {
+    position: relative;
+    width: 280px;
+    height: 320px;
+    background: radial-gradient(ellipse at center, #fffde7 60%, #fff9c4 100%);
+    border-radius: 20px;
+    border: 4px solid #ffcc02;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+  .corgi-name-label {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #6a1b9a;
+    background: white;
+    padding: 3px 16px;
+    border-radius: 20px;
+    border: 3px solid #ce93d8;
+    white-space: nowrap;
+  }
+
+  #corgi-svg-container {
+    position: relative;
+    width: 220px;
+    height: 260px;
+  }
+
+  .speech-bubble {
+    position: absolute;
+    top: -50px;
+    right: -30px;
+    background: white;
+    border: 3px solid #333;
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 1em;
+    font-weight: bold;
+    color: #333;
+    display: none;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -13px;
+    left: 30px;
+    width: 0; height: 0;
+    border-left: 12px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 13px solid #333;
+  }
+  .speech-bubble.show { display: block; }
+
+  .accessories-panel {
+    flex: 1;
+    min-width: 280px;
+    max-width: 500px;
+  }
+
+  .category {
+    background: rgba(255,255,255,0.7);
+    border-radius: 16px;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 3px solid #e0e0e0;
+  }
+  .category-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #7b1fa2;
+    margin-bottom: 8px;
+    padding-left: 5px;
+  }
+  .items-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .item-btn {
+    width: 70px;
+    height: 70px;
+    border-radius: 14px;
+    border: 3px solid #ccc;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65em;
+    font-family: inherit;
+    font-weight: bold;
+    color: #444;
+    transition: all 0.15s;
+    padding: 4px;
+    box-shadow: 2px 2px 0 #ccc;
+    position: relative;
+    overflow: hidden;
+  }
+  .item-btn:hover { transform: scale(1.1); }
+  .item-btn.active {
+    border-color: #e91e63;
+    background: #fce4ec;
+    box-shadow: 2px 2px 0 #e91e63;
+    transform: scale(1.05);
+  }
+  .item-btn svg { margin-bottom: 3px; }
+
+  .save-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: 1.4em;
+    font-family: inherit;
+    font-weight: bold;
+    background: linear-gradient(135deg, #ff6ec7, #ff9a00);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 5px 15px rgba(255,110,199,0.5);
+    transition: transform 0.2s;
+  }
+  .save-btn:hover { transform: scale(1.03); }
+
+  .confetti-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 1000;
+    display: none;
+  }
+  .confetti-overlay.show { display: block; }
+
+  .congrats-msg {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: white;
+    border: 6px solid #ff9800;
+    border-radius: 30px;
+    padding: 30px 50px;
+    text-align: center;
+    font-size: 2em;
+    color: #e91e63;
+    z-index: 1001;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .congrats-msg.show { transform: translate(-50%, -50%) scale(1); }
+
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    animation: fall linear forwards;
+  }
+
+  @keyframes wobble {
+    0%,100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+  }
+  .wobble { animation: wobble 0.4s ease-in-out 3; }
+</style>
+</head>
+<body>
+
+<h1>🐾 Corgi Dress-Up! 🐾</h1>
+
+<div class="corgi-selector">
+  <button class="corgi-btn active" onclick="selectCorgi('Pisa')">🐕 Pisa</button>
+  <button class="corgi-btn" onclick="selectCorgi('Khaan')">🐕 Khaan</button>
+  <button class="corgi-btn" onclick="selectCorgi('Alii')">🐕 Alii</button>
+</div>
+
+<div class="game-area">
+  <div class="corgi-stage">
+    <div class="corgi-name-label" id="corgi-name-label">Pisa</div>
+    <div id="corgi-svg-container">
+      <div class="speech-bubble" id="speech-bubble">Woof!</div>
+      <!-- Corgi SVG will be injected here -->
+    </div>
+  </div>
+
+  <div class="accessories-panel">
+    <div class="category">
+      <div class="category-title">🎩 Hats</div>
+      <div class="items-row" id="hats-row"></div>
+    </div>
+    <div class="category">
+      <div class="category-title">👗 Outfits</div>
+      <div class="items-row" id="outfits-row"></div>
+    </div>
+    <div class="category">
+      <div class="category-title">✨ Accessories</div>
+      <div class="items-row" id="accessories-row"></div>
+    </div>
+    <div class="category">
+      <div class="category-title">🎭 Extras</div>
+      <div class="items-row" id="extras-row"></div>
+    </div>
+    <button class="save-btn" onclick="saveLook()">💾 Save Look! 🌟</button>
+  </div>
+</div>
+
+<div class="confetti-overlay" id="confetti-overlay"></div>
+<div class="congrats-msg" id="congrats-msg">🎉 Amazing Look! 🎉<br><span style="font-size:0.6em;color:#ff9800">You're a fashion star!</span></div>
+
+<script>
+// ---- State ----
+const corgis = { Pisa: {}, Khaan: {}, Alii: {} };
+let currentCorgi = 'Pisa';
+
+// ---- Audio ----
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+function playEquip() {
+  try {
+    const ctx = getAudio();
+    const freqs = [523, 659, 784, 1047];
+    freqs.forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = f;
+      o.type = 'sine';
+      const t = ctx.currentTime + i * 0.07;
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      o.start(t); o.stop(t + 0.18);
+    });
+  } catch(e) {}
+}
+function playUnequip() {
+  try {
+    const ctx = getAudio();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(400, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.15);
+    o.type = 'sine';
+    g.gain.setValueAtTime(0.2, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    o.start(); o.stop(ctx.currentTime + 0.15);
+  } catch(e) {}
+}
+
+// ---- Accessories Data ----
+const HATS = [
+  { id: 'partyhat', label: 'Party Hat', svg: `<svg width="40" height="36" viewBox="0 0 40 36"><polygon points="20,2 5,34 35,34" fill="#ff6b9d" stroke="#333" stroke-width="1.5"/><circle cx="20" cy="2" r="3" fill="#ffe566"/><line x1="5" y1="34" x2="35" y2="34" stroke="#ff9800" stroke-width="3"/><circle cx="12" cy="20" r="2" fill="#ffe566"/><circle cx="26" cy="16" r="2" fill="#4fc3f7"/><circle cx="20" cy="28" r="2" fill="#a5d6a7"/></svg>` },
+  { id: 'cowboy', label: 'Cowboy Hat', svg: `<svg width="50" height="32" viewBox="0 0 50 32"><ellipse cx="25" cy="28" rx="24" ry="5" fill="#8d6e63" stroke="#5d4037" stroke-width="1.5"/><rect x="14" y="6" width="22" height="22" rx="6" fill="#a1887f" stroke="#5d4037" stroke-width="1.5"/><path d="M14 12 Q8 10 2 14" stroke="#5d4037" stroke-width="2" fill="none"/><path d="M36 12 Q42 10 48 14" stroke="#5d4037" stroke-width="2" fill="none"/><ellipse cx="25" cy="8" rx="6" ry="4" fill="#8d6e63" stroke="#5d4037" stroke-width="1.5"/></svg>` },
+  { id: 'crown', label: 'Crown', svg: `<svg width="46" height="30" viewBox="0 0 46 30"><polygon points="3,28 3,10 12,20 23,4 34,20 43,10 43,28" fill="#ffd700" stroke="#ff8f00" stroke-width="2"/><rect x="3" y="24" width="40" height="6" rx="2" fill="#ffa000"/><circle cx="23" cy="6" r="3" fill="#e91e63"/><circle cx="12" cy="20" r="2.5" fill="#4fc3f7"/><circle cx="34" cy="20" r="2.5" fill="#66bb6a"/></svg>` },
+  { id: 'astronaut', label: 'Astronaut', svg: `<svg width="46" height="44" viewBox="0 0 46 44"><ellipse cx="23" cy="22" rx="20" ry="20" fill="white" stroke="#90a4ae" stroke-width="2.5"/><ellipse cx="23" cy="22" rx="14" ry="14" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="1.5"/><ellipse cx="23" cy="22" rx="9" ry="9" fill="#e3f2fd"/><rect x="7" y="10" width="5" height="10" rx="2" fill="#ff8a65"/></svg>` },
+  { id: 'chef', label: 'Chef Hat', svg: `<svg width="40" height="42" viewBox="0 0 40 42"><rect x="8" y="32" width="24" height="8" rx="2" fill="white" stroke="#bbb" stroke-width="1.5"/><ellipse cx="20" cy="18" rx="16" ry="18" fill="white" stroke="#bbb" stroke-width="1.5"/><ellipse cx="20" cy="32" rx="13" ry="5" fill="white" stroke="#bbb" stroke-width="1"/></svg>` }
+];
+
+const OUTFITS = [
+  { id: 'cape', label: 'Cape', svg: `<svg width="50" height="46" viewBox="0 0 50 46"><path d="M10 4 L40 4 L45 44 Q25 36 5 44 Z" fill="#e53935" stroke="#b71c1c" stroke-width="1.5"/><polygon points="25,4 33,20 17,20" fill="#ffd700"/><text x="25" y="32" text-anchor="middle" font-size="14" fill="#ffd700">★</text></svg>` },
+  { id: 'bowtie', label: 'Bow Tie', svg: `<svg width="44" height="28" viewBox="0 0 44 28"><polygon points="4,4 20,14 4,24" fill="#e91e63" stroke="#ad1457" stroke-width="1"/><polygon points="40,4 24,14 40,24" fill="#e91e63" stroke="#ad1457" stroke-width="1"/><circle cx="22" cy="14" r="5" fill="#f06292"/></svg>` },
+  { id: 'sweater', label: 'Sweater', svg: `<svg width="50" height="40" viewBox="0 0 50 40"><path d="M5 38 L5 12 Q10 5 15 10 L20 5 Q25 2 30 5 L35 10 Q40 5 45 12 L45 38 Z" fill="#7e57c2" stroke="#512da8" stroke-width="1.5"/><line x1="5" y1="20" x2="45" y2="20" stroke="white" stroke-width="2.5" stroke-dasharray="4,3"/><line x1="5" y1="28" x2="45" y2="28" stroke="#ce93d8" stroke-width="2"/></svg>` },
+  { id: 'astronautsuit', label: 'Space Suit', svg: `<svg width="50" height="44" viewBox="0 0 50 44"><path d="M8 42 L8 16 Q14 8 25 8 Q36 8 42 16 L42 42 Z" fill="white" stroke="#90a4ae" stroke-width="2"/><rect x="16" y="14" width="18" height="14" rx="4" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="1.5"/><circle cx="16" cy="30" r="4" fill="#ff8a65"/><circle cx="34" cy="30" r="4" fill="#ff8a65"/><rect x="20" y="34" width="10" height="6" rx="2" fill="#90a4ae"/></svg>` },
+  { id: 'pirate', label: 'Pirate', svg: `<svg width="46" height="34" viewBox="0 0 46 34"><path d="M4 34 Q23 24 42 34 L38 10 Q23 2 8 10 Z" fill="#212121" stroke="#333" stroke-width="1"/><rect x="0" y="20" width="46" height="6" fill="#e53935"/><circle cx="23" cy="26" r="3" fill="white"/><text x="18" y="17" font-size="12" fill="white">☠</text></svg>` }
+];
+
+const ACCESSORIES = [
+  { id: 'sunglasses', label: 'Sunglasses', svg: `<svg width="50" height="22" viewBox="0 0 50 22"><rect x="2" y="4" width="18" height="14" rx="7" fill="#1a237e" stroke="#333" stroke-width="1.5"/><rect x="30" y="4" width="18" height="14" rx="7" fill="#1a237e" stroke="#333" stroke-width="1.5"/><line x1="20" y1="10" x2="30" y2="10" stroke="#333" stroke-width="2"/><line x1="2" y1="10" x2="0" y2="16" stroke="#333" stroke-width="2"/><line x1="48" y1="10" x2="50" y2="16" stroke="#333" stroke-width="2"/></svg>` },
+  { id: 'bow', label: 'Pink Bow', svg: `<svg width="40" height="26" viewBox="0 0 40 26"><polygon points="4,4 18,13 4,22" fill="#ff4081" stroke="#c51162" stroke-width="1"/><polygon points="36,4 22,13 36,22" fill="#ff4081" stroke="#c51162" stroke-width="1"/><circle cx="20" cy="13" r="4.5" fill="#ff80ab"/></svg>` },
+  { id: 'collar_red', label: 'Red Collar', svg: `<svg width="46" height="14" viewBox="0 0 46 14"><rect x="1" y="2" width="44" height="10" rx="5" fill="#e53935" stroke="#b71c1c" stroke-width="1.5"/><circle cx="23" cy="7" r="3" fill="#ffd700"/></svg>` },
+  { id: 'collar_blue', label: 'Blue Collar', svg: `<svg width="46" height="14" viewBox="0 0 46 14"><rect x="1" y="2" width="44" height="10" rx="5" fill="#1e88e5" stroke="#0d47a1" stroke-width="1.5"/><circle cx="23" cy="7" r="3" fill="#ffd700"/></svg>` },
+  { id: 'collar_green', label: 'Green Collar', svg: `<svg width="46" height="14" viewBox="0 0 46 14"><rect x="1" y="2" width="44" height="10" rx="5" fill="#43a047" stroke="#1b5e20" stroke-width="1.5"/><circle cx="23" cy="7" r="3" fill="#ffd700"/></svg>` },
+  { id: 'collar_yellow', label: 'Yellow Collar', svg: `<svg width="46" height="14" viewBox="0 0 46 14"><rect x="1" y="2" width="44" height="10" rx="5" fill="#fdd835" stroke="#f57f17" stroke-width="1.5"/><circle cx="23" cy="7" r="3" fill="#e91e63"/></svg>` }
+];
+
+const EXTRAS = [
+  { id: 'wand', label: 'Magic Wand', svg: `<svg width="40" height="40" viewBox="0 0 40 40"><line x1="34" y1="6" x2="6" y2="34" stroke="#7b1fa2" stroke-width="3" stroke-linecap="round"/><polygon points="34,1 37,8 30,8" fill="#ffd700" stroke="#ff8f00" stroke-width="1"/><circle cx="12" cy="10" r="3" fill="#ffe566" opacity="0.9"/><circle cx="28" cy="28" r="2" fill="#ff80ab" opacity="0.9"/><circle cx="8" cy="24" r="1.5" fill="#80deea" opacity="0.9"/></svg>` },
+  { id: 'bone', label: 'Bone', svg: `<svg width="44" height="20" viewBox="0 0 44 20"><rect x="10" y="6" width="24" height="8" rx="3" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/><circle cx="8" cy="5" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/><circle cx="8" cy="15" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/><circle cx="36" cy="5" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/><circle cx="36" cy="15" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/></svg>` },
+  { id: 'bubble_woof', label: '"Woof!"', svg: `<svg width="46" height="32" viewBox="0 0 46 32"><rect x="2" y="2" width="42" height="24" rx="12" fill="white" stroke="#333" stroke-width="2"/><polygon points="14,26 6,32 22,26" fill="white" stroke="#333" stroke-width="2"/><text x="23" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">Woof!</text></svg>` },
+  { id: 'bubble_princess', label: 'Princess!', svg: `<svg width="52" height="32" viewBox="0 0 52 32"><rect x="2" y="2" width="48" height="24" rx="12" fill="#fce4ec" stroke="#e91e63" stroke-width="2"/><polygon points="14,26 6,32 22,26" fill="#fce4ec" stroke="#e91e63" stroke-width="2"/><text x="26" y="18" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#e91e63">I'm Princess!</text></svg>` },
+  { id: 'bubble_zoom', label: '"Zoom!"', svg: `<svg width="46" height="32" viewBox="0 0 46 32"><rect x="2" y="2" width="42" height="24" rx="12" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/><polygon points="14,26 6,32 22,26" fill="#e8f5e9" stroke="#43a047" stroke-width="2"/><text x="23" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#2e7d32">Zoom!</text></svg>` }
+];
+
+// ---- Build accessory buttons ----
+function buildPanel(items, containerId, category) {
+  const row = document.getElementById(containerId);
+  items.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'item-btn';
+    btn.id = 'btn-' + item.id;
+    btn.innerHTML = item.svg + '<span>' + item.label + '</span>';
+    btn.onclick = () => toggleItem(category, item.id, item);
+    row.appendChild(btn);
+  });
+}
+buildPanel(HATS, 'hats-row', 'hat');
+buildPanel(OUTFITS, 'outfits-row', 'outfit');
+buildPanel(ACCESSORIES, 'accessories-row', 'accessory');
+buildPanel(EXTRAS, 'extras-row', 'extra');
+
+// ---- Toggle logic ----
+function toggleItem(category, id, item) {
+  const state = corgis[currentCorgi];
+  // Hats are exclusive; collars are exclusive among themselves
+  const isCollar = id.startsWith('collar_');
+  const isBubble = id.startsWith('bubble_');
+
+  if (category === 'hat') {
+    if (state.hat === id) { delete state.hat; }
+    else { state.hat = id; }
+  } else if (isCollar) {
+    if (state.collar === id) { delete state.collar; }
+    else { state.collar = id; }
+  } else if (isBubble) {
+    if (state.bubble === id) { delete state.bubble; }
+    else { state.bubble = id; }
+  } else {
+    if (state[id]) { delete state[id]; }
+    else { state[id] = true; }
+  }
+
+  if (state.hat || state[id] !== undefined || state.collar || state.bubble) {
+    playEquip();
+  } else {
+    playUnequip();
+  }
+
+  renderCorgi();
+  updateButtons();
+}
+
+// ---- Corgi SVG ----
+function getCorgiSVG(state) {
+  // Determine collar color
+  let collarColor = null;
+  if (state.collar === 'collar_red') collarColor = '#e53935';
+  else if (state.collar === 'collar_blue') collarColor = '#1e88e5';
+  else if (state.collar === 'collar_green') collarColor = '#43a047';
+  else if (state.collar === 'collar_yellow') collarColor = '#fdd835';
+
+  // Sweater/outfit colors
+  const hasSweater = state.sweater;
+  const hasCape = state.cape;
+  const hasSuit = state.astronautsuit;
+  const hasPirate = state.pirate;
+  const hasBowtie = state.bowtie;
+
+  // Body color
+  const bodyColor = '#e8a055';
+  const bellyColor = '#f5d5a0';
+  const darkColor = '#c47830';
+
+  return `
+  <svg width="220" height="260" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fluffy butt/tail -->
+    <ellipse cx="168" cy="155" rx="28" ry="22" fill="${bodyColor}" stroke="${darkColor}" stroke-width="1.5"/>
+    <ellipse cx="182" cy="148" rx="18" ry="14" fill="#f0b870"/>
+    <!-- Corgi body -->
+    <ellipse cx="110" cy="158" rx="68" ry="48" fill="${bodyColor}" stroke="${darkColor}" stroke-width="2"/>
+    <!-- Belly (cream/white) -->
+    <ellipse cx="110" cy="168" rx="44" ry="30" fill="${bellyColor}"/>
+    ${hasSweater ? `<path d="M50 158 Q60 130 110 128 Q160 130 170 158 Q160 175 110 178 Q60 175 50 158 Z" fill="#7e57c2" stroke="#512da8" stroke-width="1.5" opacity="0.9"/>
+    <line x1="58" y1="158" x2="162" y2="158" stroke="white" stroke-width="2" stroke-dasharray="5,4"/>` : ''}
+    ${hasSuit ? `<path d="M55 155 Q65 128 110 126 Q155 128 165 155 Q155 180 110 182 Q65 180 55 155 Z" fill="white" stroke="#90a4ae" stroke-width="2" opacity="0.9"/>
+    <rect x="90" y="134" width="40" height="22" rx="5" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="1.5"/>` : ''}
+    ${hasCape ? `<path d="M110 135 L145 130 L175 190 Q140 175 110 185 Q80 175 45 190 L75 130 Z" fill="#e53935" stroke="#b71c1c" stroke-width="1.5"/>
+    <polygon points="110,135 122,158 98,158" fill="#ffd700"/>` : ''}
+    ${hasPirate ? `<rect x="60" y="148" width="100" height="18" rx="4" fill="#e53935"/><circle cx="110" cy="157" r="5" fill="white"/>` : ''}
+    <!-- Short legs -->
+    <rect x="66" y="192" width="20" height="34" rx="10" fill="${bodyColor}" stroke="${darkColor}" stroke-width="1.5"/>
+    <rect x="94" y="196" width="20" height="30" rx="10" fill="${bodyColor}" stroke="${darkColor}" stroke-width="1.5"/>
+    <rect x="120" y="196" width="20" height="30" rx="10" fill="${bodyColor}" stroke="${darkColor}" stroke-width="1.5"/>
+    <rect x="148" y="192" width="20" height="34" rx="10" fill="${bodyColor}" stroke="${darkColor}" stroke-width="1.5"/>
+    <!-- Paws -->
+    <ellipse cx="76" cy="228" rx="12" ry="7" fill="${bellyColor}" stroke="${darkColor}" stroke-width="1"/>
+    <ellipse cx="104" cy="228" rx="12" ry="7" fill="${bellyColor}" stroke="${darkColor}" stroke-width="1"/>
+    <ellipse cx="130" cy="228" rx="12" ry="7" fill="${bellyColor}" stroke="${darkColor}" stroke-width="1"/>
+    <ellipse cx="158" cy="228" rx="12" ry="7" fill="${bellyColor}" stroke="${darkColor}" stroke-width="1"/>
+
+    <!-- Neck/collar area -->
+    <ellipse cx="110" cy="120" rx="30" ry="18" fill="${bodyColor}" stroke="${darkColor}" stroke-width="1.5"/>
+    ${collarColor ? `<rect x="84" y="126" width="52" height="12" rx="6" fill="${collarColor}" stroke="${darkColor}" stroke-width="1"/>
+    <circle cx="110" cy="132" r="4" fill="#ffd700"/>` : ''}
+    ${hasBowtie ? `<polygon points="90,130 104,136 90,142" fill="#e91e63" stroke="#ad1457" stroke-width="1"/>
+    <polygon points="130,130 116,136 130,142" fill="#e91e63" stroke="#ad1457" stroke-width="1"/>
+    <circle cx="110" cy="136" r="5" fill="#f06292"/>` : ''}
+    <!-- Head -->
+    <ellipse cx="110" cy="80" rx="48" ry="44" fill="${bodyColor}" stroke="${darkColor}" stroke-width="2"/>
+    <!-- White face blaze -->
+    <ellipse cx="110" cy="90" rx="24" ry="28" fill="${bellyColor}"/>
+    <!-- Ears (big pointy corgi ears) -->
+    <polygon points="68,55 55,8 88,42" fill="${bodyColor}" stroke="${darkColor}" stroke-width="2"/>
+    <polygon points="72,52 62,16 86,44" fill="#e8c49a"/>
+    <polygon points="152,55 165,8 132,42" fill="${bodyColor}" stroke="${darkColor}" stroke-width="2"/>
+    <polygon points="148,52 158,16 134,44" fill="#e8c49a"/>
+    <!-- Eyes -->
+    <circle cx="95" cy="76" r="8" fill="white" stroke="#333" stroke-width="1.5"/>
+    <circle cx="125" cy="76" r="8" fill="white" stroke="#333" stroke-width="1.5"/>
+    <circle cx="97" cy="77" r="5" fill="#4a2800"/>
+    <circle cx="127" cy="77" r="5" fill="#4a2800"/>
+    <circle cx="99" cy="74" r="2" fill="white"/>
+    <circle cx="129" cy="74" r="2" fill="white"/>
+    <!-- Nose -->
+    <ellipse cx="110" cy="96" rx="10" ry="7" fill="#3e2000" stroke="#1a0000" stroke-width="1"/>
+    <ellipse cx="108" cy="94" rx="3" ry="2" fill="white" opacity="0.4"/>
+    <!-- Mouth -->
+    <path d="M100 103 Q110 112 120 103" stroke="#5d2800" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Tongue -->
+    <ellipse cx="110" cy="110" rx="8" ry="6" fill="#ff6b9d"/>
+    <!-- Freckles -->
+    <circle cx="90" cy="98" r="2" fill="#c47830" opacity="0.5"/>
+    <circle cx="84" cy="103" r="2" fill="#c47830" opacity="0.5"/>
+    <circle cx="130" cy="98" r="2" fill="#c47830" opacity="0.5"/>
+    <circle cx="136" cy="103" r="2" fill="#c47830" opacity="0.5"/>
+    <!-- Fluffy cheeks -->
+    <ellipse cx="76" cy="94" rx="14" ry="10" fill="${bodyColor}" opacity="0.5"/>
+    <ellipse cx="144" cy="94" rx="14" ry="10" fill="${bodyColor}" opacity="0.5"/>
+
+    ${state.sunglasses ? `<rect x="82" y="70" width="18" height="14" rx="7" fill="#1a237e" stroke="#333" stroke-width="1.5" opacity="0.85"/>
+    <rect x="120" y="70" width="18" height="14" rx="7" fill="#1a237e" stroke="#333" stroke-width="1.5" opacity="0.85"/>
+    <line x1="100" y1="76" x2="120" y2="76" stroke="#333" stroke-width="2"/>
+    <line x1="82" y1="76" x2="78" y2="80" stroke="#333" stroke-width="1.5"/>
+    <line x1="138" y1="76" x2="142" y2="80" stroke="#333" stroke-width="1.5"/>` : ''}
+    ${state.bow ? `<polygon points="82,54 95,62 82,70" fill="#ff4081" stroke="#c51162" stroke-width="1"/>
+    <polygon points="110,54 97,62 110,70" fill="#ff4081" stroke="#c51162" stroke-width="1"/>
+    <circle cx="96" cy="62" r="4" fill="#ff80ab"/>` : ''}
+
+    ${state.wand ? `<line x1="160" y1="195" x2="195" y2="150" stroke="#7b1fa2" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="195,145 199,156 188,156" fill="#ffd700" stroke="#ff8f00" stroke-width="1"/>
+    <circle cx="168" cy="173" r="3" fill="#ffe566" opacity="0.9"/>
+    <circle cx="185" cy="160" r="2" fill="#ff80ab" opacity="0.9"/>` : ''}
+    ${state.bone ? `<rect x="28" y="106" width="32" height="8" rx="3" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+    <circle cx="26" cy="105" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+    <circle cx="26" cy="115" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+    <circle cx="62" cy="105" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>
+    <circle cx="62" cy="115" r="5" fill="#f5f5f5" stroke="#bdbdbd" stroke-width="1.5"/>` : ''}
+
+    ${state.hat === 'partyhat' ? `<polygon points="110,12 82,56 138,56" fill="#ff6b9d" stroke="#333" stroke-width="1.5"/>
+    <circle cx="110" cy="12" r="4" fill="#ffe566"/>
+    <line x1="82" y1="56" x2="138" y2="56" stroke="#ff9800" stroke-width="3"/>
+    <circle cx="96" cy="38" r="2.5" fill="#ffe566"/>
+    <circle cx="122" cy="30" r="2.5" fill="#4fc3f7"/>` : ''}
+    ${state.hat === 'cowboy' ? `<ellipse cx="110" cy="54" rx="38" ry="7" fill="#8d6e63" stroke="#5d4037" stroke-width="1.5"/>
+    <rect x="88" y="22" width="44" height="34" rx="10" fill="#a1887f" stroke="#5d4037" stroke-width="1.5"/>
+    <path d="M88 34 Q72 30 58 38" stroke="#5d4037" stroke-width="2.5" fill="none"/>
+    <path d="M132 34 Q148 30 162 38" stroke="#5d4037" stroke-width="2.5" fill="none"/>
+    <ellipse cx="110" cy="24" rx="14" ry="8" fill="#8d6e63" stroke="#5d4037" stroke-width="1.5"/>` : ''}
+    ${state.hat === 'crown' ? `<polygon points="68,50 68,28 84,40 110,16 136,40 152,28 152,50" fill="#ffd700" stroke="#ff8f00" stroke-width="2"/>
+    <rect x="68" y="46" width="84" height="10" rx="3" fill="#ffa000"/>
+    <circle cx="110" cy="18" r="5" fill="#e91e63"/>
+    <circle cx="84" cy="40" r="4" fill="#4fc3f7"/>
+    <circle cx="136" cy="40" r="4" fill="#66bb6a"/>` : ''}
+    ${state.hat === 'astronaut' ? `<ellipse cx="110" cy="50" rx="46" ry="48" fill="white" stroke="#90a4ae" stroke-width="2.5"/>
+    <ellipse cx="110" cy="56" rx="30" ry="30" fill="#b3e5fc" stroke="#4fc3f7" stroke-width="2"/>
+    <ellipse cx="110" cy="56" rx="20" ry="20" fill="#e3f2fd" opacity="0.7"/>
+    <rect x="70" y="30" width="10" height="18" rx="3" fill="#ff8a65"/>` : ''}
+    ${state.hat === 'chef' ? `<rect x="84" y="50" width="52" height="14" rx="3" fill="white" stroke="#bbb" stroke-width="1.5"/>
+    <ellipse cx="110" cy="34" rx="30" ry="26" fill="white" stroke="#bbb" stroke-width="1.5"/>
+    <ellipse cx="110" cy="52" rx="26" ry="8" fill="white" stroke="#bbb" stroke-width="1"/>` : ''}
+  </svg>`;
+}
+
+// ---- Render ----
+function renderCorgi() {
+  const state = corgis[currentCorgi];
+  const container = document.getElementById('corgi-svg-container');
+
+  // Speech bubble
+  const bubble = document.getElementById('speech-bubble');
+  if (state.bubble_woof) { bubble.textContent = 'Woof!'; bubble.className = 'speech-bubble show'; }
+  else if (state.bubble_princess) { bubble.textContent = "I'm Princess!"; bubble.className = 'speech-bubble show'; }
+  else if (state.bubble_zoom) { bubble.textContent = 'Zoom!'; bubble.className = 'speech-bubble show'; }
+  else { bubble.className = 'speech-bubble'; }
+
+  // Remove old SVG
+  const old = container.querySelector('svg');
+  if (old) old.remove();
+  container.insertAdjacentHTML('beforeend', getCorgiSVG(state));
+
+  // Wobble animation
+  const svg = container.querySelector('svg');
+  svg.classList.remove('wobble');
+  void svg.offsetWidth;
+  svg.classList.add('wobble');
+}
+
+function updateButtons() {
+  const state = corgis[currentCorgi];
+  // Clear all active
+  document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
+  // Set active
+  if (state.hat) {
+    const b = document.getElementById('btn-' + state.hat);
+    if (b) b.classList.add('active');
+  }
+  if (state.collar) {
+    const b = document.getElementById('btn-' + state.collar);
+    if (b) b.classList.add('active');
+  }
+  if (state.bubble) {
+    const b = document.getElementById('btn-' + state.bubble);
+    if (b) b.classList.add('active');
+  }
+  ['sunglasses','bow','wand','bone','bowtie','sweater','cape','astronautsuit','pirate'].forEach(id => {
+    if (state[id]) {
+      const b = document.getElementById('btn-' + id);
+      if (b) b.classList.add('active');
+    }
+  });
+}
+
+function selectCorgi(name) {
+  currentCorgi = name;
+  document.getElementById('corgi-name-label').textContent = name;
+  document.querySelectorAll('.corgi-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(name));
+  });
+  renderCorgi();
+  updateButtons();
+}
+
+// ---- Save / Confetti ----
+function saveLook() {
+  playEquip();
+  const overlay = document.getElementById('confetti-overlay');
+  const msg = document.getElementById('congrats-msg');
+  overlay.innerHTML = '';
+  overlay.classList.add('show');
+  msg.classList.add('show');
+
+  const colors = ['#ff6b9d','#ffd700','#4fc3f7','#66bb6a','#ff9800','#ce93d8','#80deea'];
+  for (let i = 0; i < 60; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.random() * 100 + 'vw';
+    piece.style.top = '-20px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
+    piece.style.animationDuration = (0.8 + Math.random() * 1.5) + 's';
+    piece.style.animationDelay = (Math.random() * 0.5) + 's';
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+    overlay.appendChild(piece);
+  }
+
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    msg.classList.remove('show');
+    overlay.innerHTML = '';
+  }, 2800);
+}
+
+// ---- Init ----
+renderCorgi();
+updateButtons();
+</script>
+</body>
+</html>
